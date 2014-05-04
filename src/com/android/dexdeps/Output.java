@@ -244,7 +244,7 @@ public class Output {
      * Converts a single-character primitive type into its human-readable
      * equivalent.
      */
-    static String primitiveTypeLabel(char typeChar) {
+    public static String primitiveTypeLabel(char typeChar) {
         /* primitive type; substitute human-readable name in */
         switch (typeChar) {
             case 'B':   return "byte";
@@ -269,7 +269,7 @@ public class Output {
      * example, "Ljava/lang/String;" becomes "java.lang.String", and
      * "[I" becomes "int[].
      */
-    static String descriptorToDot(String descr) {
+    public static String descriptorToDot(String descr) {
         int targetLen = descr.length();
         int offset = 0;
         int arrayDepth = 0;
@@ -317,7 +317,7 @@ public class Output {
     /**
      * Extracts the class name from a type descriptor.
      */
-    static String classNameOnly(String typeName) {
+    public static String classNameOnly(String typeName) {
         String dotted = descriptorToDot(typeName);
 
         int start = dotted.lastIndexOf(".");
@@ -332,7 +332,7 @@ public class Output {
      * Extracts the package name from a type descriptor, and returns it in
      * dotted form.
      */
-    static String packageNameOnly(String typeName) {
+    public static String packageNameOnly(String typeName) {
         String dotted = descriptorToDot(typeName);
 
         int end = dotted.lastIndexOf(".");

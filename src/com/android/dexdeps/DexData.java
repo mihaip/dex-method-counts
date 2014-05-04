@@ -419,6 +419,22 @@ public class DexData {
         }
     }
 
+    /**
+     * Returns the list of all method references.
+     */
+    public MethodRef[] getMethodRefs() {
+        MethodRef[] methodRefs = new MethodRef[mMethodIds.length];
+        for (int i = 0; i < mMethodIds.length; i++) {
+            MethodIdItem methodId = mMethodIds[i];
+            methodRefs[i] = new MethodRef(
+                    classNameFromTypeIndex(methodId.classIdx),
+                    argArrayFromProtoIndex(methodId.protoIdx),
+                    returnTypeFromProtoIndex(methodId.protoIdx),
+                    mStrings[methodId.nameIdx]);
+        }
+        return methodRefs;
+    }
+
 
     /*
      * =======================================================================

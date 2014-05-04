@@ -1,6 +1,4 @@
 /*
- * Copyright (C) 2009 The Android Open Source Project
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,7 +12,10 @@
  * limitations under the License.
  */
 
-package com.android.dexdeps;
+package info.persistent.dex;
+
+import com.android.dexdeps.DexData;
+import com.android.dexdeps.DexDataException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -30,13 +31,6 @@ public class Main {
     private static final String CLASSES_DEX = "classes.dex";
 
     private String[] mInputFileNames;
-    private String mOutputFormat = "xml";
-
-    /**
-     * whether to only emit info about classes used; when {@code false},
-     * info about fields and methods is also emitted
-     */
-    private boolean mJustClasses = false;
 
     /**
      * Entry point.
@@ -58,16 +52,7 @@ public class Main {
                 RandomAccessFile raf = openInputFile(fileName);
                 DexData dexData = new DexData(raf);
                 dexData.load();
-
-                if (first) {
-                    first = false;
-                    Output.generateFirstHeader(fileName, mOutputFormat);
-                } else {
-                    Output.generateHeader(fileName, mOutputFormat);
-                }
-
-                Output.generate(dexData, mOutputFormat, mJustClasses);
-                Output.generateFooter(mOutputFormat);
+                DexMethodCounts.generate(dexData);
                 raf.close();
             }
         } catch (UsageException ue) {
@@ -182,38 +167,14 @@ public class Main {
      * @throws UsageException if arguments are missing or poorly formed
      */
     void parseArgs(String[] args) {
-        int idx;
-
-        for (idx = 0; idx < args.length; idx++) {
-            String arg = args[idx];
-
-            if (arg.equals("--") || !arg.startsWith("--")) {
-                break;
-            } else if (arg.startsWith("--format=")) {
-                mOutputFormat = arg.substring(arg.indexOf('=') + 1);
-                if (!mOutputFormat.equals("brief") &&
-                    !mOutputFormat.equals("xml"))
-                {
-                    System.err.println("Unknown format '" + mOutputFormat +"'");
-                    throw new UsageException();
-                }
-                //System.out.println("+++ using format " + mOutputFormat);
-            } else if (arg.equals("--just-classes")) {
-                mJustClasses = true;
-            } else {
-                System.err.println("Unknown option '" + arg + "'");
-                throw new UsageException();
-            }
-        }
-
         // We expect at least one more argument (file name).
-        int fileCount = args.length - idx;
+        int fileCount = args.length;
         if (fileCount == 0) {
             throw new UsageException();
         }
 
         mInputFileNames = new String[fileCount];
-        System.arraycopy(args, idx, mInputFileNames, 0, fileCount);
+        System.arraycopy(args, 0, mInputFileNames, 0, fileCount);
     }
 
     /**
@@ -228,4 +189,6 @@ public class Main {
                 "  --format={xml,brief}\n" +
                 "  --just-classes\n");
     }
+
+    private static class UsageException extends RuntimeException {}
 }
