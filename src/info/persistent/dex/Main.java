@@ -30,7 +30,8 @@ import java.util.zip.ZipInputStream;
 public class Main {
     private static final String CLASSES_DEX = "classes.dex";
 
-    private String[] mInputFileNames;
+    private boolean includeClasses;
+    private String[] inputFileNames;
 
     /**
      * Entry point.
@@ -48,11 +49,11 @@ public class Main {
             parseArgs(args);
             boolean first = true;
 
-            for (String fileName : mInputFileNames) {
+            for (String fileName : inputFileNames) {
                 RandomAccessFile raf = openInputFile(fileName);
                 DexData dexData = new DexData(raf);
                 dexData.load();
-                DexMethodCounts.generate(dexData);
+                DexMethodCounts.generate(dexData, includeClasses);
                 raf.close();
             }
         } catch (UsageException ue) {
@@ -160,34 +161,38 @@ public class Main {
         return raf;
     }
 
-
-    /**
-     * Parses command-line arguments.
-     *
-     * @throws UsageException if arguments are missing or poorly formed
-     */
     void parseArgs(String[] args) {
+        int idx;
+
+        for (idx = 0; idx < args.length; idx++) {
+            String arg = args[idx];
+
+            if (arg.equals("--") || !arg.startsWith("--")) {
+                break;
+            } else if (arg.equals("--include-classes")) {
+                includeClasses = true;
+            } else {
+                System.err.println("Unknown option '" + arg + "'");
+                throw new UsageException();
+            }
+        }
+
         // We expect at least one more argument (file name).
-        int fileCount = args.length;
+        int fileCount = args.length - idx;
         if (fileCount == 0) {
             throw new UsageException();
         }
 
-        mInputFileNames = new String[fileCount];
-        System.arraycopy(args, 0, mInputFileNames, 0, fileCount);
+        inputFileNames = new String[fileCount];
+        System.arraycopy(args, idx, inputFileNames, 0, fileCount);
     }
 
-    /**
-     * Prints command-line usage info.
-     */
     void usage() {
         System.err.print(
-                "DEX dependency scanner v1.2\n" +
-                "Copyright (C) 2009 The Android Open Source Project\n\n" +
-                "Usage: dexdeps [options] <file.{dex,apk,jar}> ...\n" +
-                "Options:\n" +
-                "  --format={xml,brief}\n" +
-                "  --just-classes\n");
+            "DEX per-package/class method counts v1.0\n" +
+            "Usage: dex-method-counts [options] <file.{dex,apk,jar}> ...\n" +
+            "Options:\n" +
+            "  --include-classes\n");
     }
 
     private static class UsageException extends RuntimeException {}
