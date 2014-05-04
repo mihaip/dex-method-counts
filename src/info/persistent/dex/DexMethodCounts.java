@@ -42,7 +42,8 @@ public class DexMethodCounts {
         }
     }
 
-    public static void generate(DexData dexData, boolean includeClasses) {
+    public static void generate(
+            DexData dexData, boolean includeClasses, String packageFilter) {
         MethodRef[] methodRefs = dexData.getMethodRefs();
         out.println("Read in " + methodRefs.length + " method IDs.");
 
@@ -53,6 +54,10 @@ public class DexMethodCounts {
             String packageName = includeClasses ?
                 Output.descriptorToDot(classDescriptor).replace('$', '.') :
                 Output.packageNameOnly(classDescriptor);
+            if (packageFilter != null &&
+                    !packageName.startsWith(packageFilter)) {
+                continue;
+            }
             String packageNamePieces[] = packageName.split("\\.");
             Node packageNode = packageTree;
             for (int i = 0; i < packageNamePieces.length; i++) {

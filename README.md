@@ -30,6 +30,7 @@ You'll see output of the form:
 Supported options are:
 
 * `--include-classes`: Treat classes as packages and provide per-class method counts. One use-case is for protocol buffers where all generated code in a package ends up in a single class.
+* `--package-filter=...`: Only consider methods whose fullly qualified name starts with this prefix.
 
 The DEX file parsing is based on the `dexdeps` tool from
 [the Android source tree](https://android.googlesource.com/platform/dalvik.git/+/master/tools/dexdeps/).

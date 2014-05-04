@@ -31,6 +31,7 @@ public class Main {
     private static final String CLASSES_DEX = "classes.dex";
 
     private boolean includeClasses;
+    private String packageFilter;
     private String[] inputFileNames;
 
     /**
@@ -53,7 +54,8 @@ public class Main {
                 RandomAccessFile raf = openInputFile(fileName);
                 DexData dexData = new DexData(raf);
                 dexData.load();
-                DexMethodCounts.generate(dexData, includeClasses);
+                DexMethodCounts.generate(
+                    dexData, includeClasses, packageFilter);
                 raf.close();
             }
         } catch (UsageException ue) {
@@ -171,6 +173,8 @@ public class Main {
                 break;
             } else if (arg.equals("--include-classes")) {
                 includeClasses = true;
+            } else if (arg.startsWith("--package-filter=")) {
+                packageFilter = arg.substring(arg.indexOf('=') + 1);
             } else {
                 System.err.println("Unknown option '" + arg + "'");
                 throw new UsageException();
@@ -192,7 +196,8 @@ public class Main {
             "DEX per-package/class method counts v1.0\n" +
             "Usage: dex-method-counts [options] <file.{dex,apk,jar}> ...\n" +
             "Options:\n" +
-            "  --include-classes\n");
+            "  --include-classes\n" +
+            "  --package-filter=com.foo.bar\n");
     }
 
     private static class UsageException extends RuntimeException {}
