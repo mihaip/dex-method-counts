@@ -14,16 +14,27 @@
 
 package info.persistent.dex;
 
+import com.android.dexdeps.ClassRef;
 import com.android.dexdeps.DexData;
 import com.android.dexdeps.MethodRef;
 import com.android.dexdeps.Output;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.TreeMap;
 
 public class DexMethodCounts {
     private static final PrintStream out = System.out;
+
+    enum Filter {
+        ALL,
+        DEFINED_ONLY,
+        REFERENCED_ONLY
+    }
 
     private static class Node {
         int count = 0;
@@ -44,10 +55,8 @@ public class DexMethodCounts {
 
     public static void generate(
             DexData dexData, boolean includeClasses, String packageFilter,
-            int maxDepth) {
-        MethodRef[] methodRefs = dexData.getMethodRefs();
-        out.println("Read in " + methodRefs.length + " method IDs.");
-
+            int maxDepth, Filter filter) {
+        MethodRef[] methodRefs = getMethodRefs(dexData, filter);
         Node packageTree = new Node();
 
         for (MethodRef methodRef : methodRefs) {
@@ -76,5 +85,38 @@ public class DexMethodCounts {
         }
 
         packageTree.output("");
+    }
+
+    private static MethodRef[] getMethodRefs(DexData dexData, Filter filter) {
+        MethodRef[] methodRefs = dexData.getMethodRefs();
+        out.println("Read in " + methodRefs.length + " method IDs.");
+        if (filter == Filter.ALL) {
+            return methodRefs;
+        }
+
+        ClassRef[] externalClassRefs = dexData.getExternalReferences();
+        out.println("Read in " + externalClassRefs.length +
+            " external class references.");
+        Set<MethodRef> externalMethodRefs = new HashSet<MethodRef>();
+        for (ClassRef classRef : externalClassRefs) {
+            for (MethodRef methodRef : classRef.getMethodArray()) {
+                externalMethodRefs.add(methodRef);
+            }
+        }
+        out.println("Read in " + externalMethodRefs.size() +
+            " external method references.");
+        List<MethodRef> filteredMethodRefs = new ArrayList<MethodRef>();
+        for (MethodRef methodRef : methodRefs) {
+            boolean isExternal = externalMethodRefs.contains(methodRef);
+            if ((filter == Filter.DEFINED_ONLY && !isExternal) ||
+                (filter == Filter.REFERENCED_ONLY && isExternal)) {
+                filteredMethodRefs.add(methodRef);
+            }
+        }
+        out.println("Filtered to " + filteredMethodRefs.size() + " " +
+            (filter == Filter.DEFINED_ONLY ? "defined" : "referenced") +
+            " method IDs.");
+        return filteredMethodRefs.toArray(
+            new MethodRef[filteredMethodRefs.size()]);
     }
 }

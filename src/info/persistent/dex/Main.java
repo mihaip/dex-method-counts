@@ -33,6 +33,7 @@ public class Main {
     private boolean includeClasses;
     private String packageFilter;
     private int maxDepth = Integer.MAX_VALUE;
+    private DexMethodCounts.Filter filter = DexMethodCounts.Filter.ALL;
     private String[] inputFileNames;
 
     /**
@@ -56,7 +57,7 @@ public class Main {
                 DexData dexData = new DexData(raf);
                 dexData.load();
                 DexMethodCounts.generate(
-                    dexData, includeClasses, packageFilter, maxDepth);
+                    dexData, includeClasses, packageFilter, maxDepth, filter);
                 raf.close();
             }
         } catch (UsageException ue) {
@@ -179,6 +180,10 @@ public class Main {
             } else if (arg.startsWith("--max-depth=")) {
                 maxDepth =
                     Integer.parseInt(arg.substring(arg.indexOf('=') + 1));
+            } else if (arg.startsWith("--filter=")) {
+                filter = Enum.valueOf(
+                    DexMethodCounts.Filter.class,
+                    arg.substring(arg.indexOf('=') + 1).toUpperCase());
             } else {
                 System.err.println("Unknown option '" + arg + "'");
                 throw new UsageException();

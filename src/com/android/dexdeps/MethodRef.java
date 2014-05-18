@@ -16,6 +16,8 @@
 
 package com.android.dexdeps;
 
+import java.util.Arrays;
+
 public class MethodRef {
     private String mDeclClass, mReturnType, mMethodName;
     private String[] mArgTypes;
@@ -83,5 +85,21 @@ public class MethodRef {
         builder.append(returnType);
 
         return builder.toString();
+    }
+
+    @Override public boolean equals(Object o) {
+        if (!(o instanceof MethodRef)) {
+            return false;
+        }
+        MethodRef other = (MethodRef) o;
+        return other.mDeclClass.equals(mDeclClass) &&
+            other.mReturnType.equals(mReturnType) &&
+            other.mMethodName.equals(mMethodName) &&
+            Arrays.equals(other.mArgTypes, mArgTypes);
+    }
+
+    @Override public int hashCode() {
+        return mDeclClass.hashCode() ^ mReturnType.hashCode() ^
+            mMethodName.hashCode() ^ Arrays.hashCode(mArgTypes);
     }
 }
