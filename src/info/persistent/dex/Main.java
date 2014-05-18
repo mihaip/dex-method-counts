@@ -32,6 +32,7 @@ public class Main {
 
     private boolean includeClasses;
     private String packageFilter;
+    private int maxDepth = Integer.MAX_VALUE;
     private String[] inputFileNames;
 
     /**
@@ -55,7 +56,7 @@ public class Main {
                 DexData dexData = new DexData(raf);
                 dexData.load();
                 DexMethodCounts.generate(
-                    dexData, includeClasses, packageFilter);
+                    dexData, includeClasses, packageFilter, maxDepth);
                 raf.close();
             }
         } catch (UsageException ue) {
@@ -175,6 +176,9 @@ public class Main {
                 includeClasses = true;
             } else if (arg.startsWith("--package-filter=")) {
                 packageFilter = arg.substring(arg.indexOf('=') + 1);
+            } else if (arg.startsWith("--max-depth=")) {
+                maxDepth =
+                    Integer.parseInt(arg.substring(arg.indexOf('=') + 1));
             } else {
                 System.err.println("Unknown option '" + arg + "'");
                 throw new UsageException();
@@ -197,7 +201,8 @@ public class Main {
             "Usage: dex-method-counts [options] <file.{dex,apk,jar}> ...\n" +
             "Options:\n" +
             "  --include-classes\n" +
-            "  --package-filter=com.foo.bar\n");
+            "  --package-filter=com.foo.bar\n" +
+            "  --max-depth=N\n");
     }
 
     private static class UsageException extends RuntimeException {}
