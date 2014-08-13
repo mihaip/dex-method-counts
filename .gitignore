@@ -1,1 +1,9 @@
+# Output directory for ANT and Gradle
 build/
+
+# Intellij project files
+*.iml
+.idea/
+
+#Gradle
+.gradle/
