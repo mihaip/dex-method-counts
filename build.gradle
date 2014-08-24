@@ -1,0 +1,18 @@
+apply plugin: 'java'
+
+// Match existing source structure
+sourceSets {
+    main {
+        java {
+            srcDir 'src'
+        }
+    }
+}
+
+jar {
+    // Redirect output to match launcher script
+    destinationDir = file('build/jar')
+    manifest {
+        attributes("Main-Class": "info.persistent.dex.Main")
+    }
+}

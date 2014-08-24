@@ -2,9 +2,14 @@
 
 Simple tool to output per-package method counts in an Android DEX executable grouped by package, to aid in getting under the 65,536 referenced method limit. More details are [in this blog post](http://blog.persistent.info/2014/05/per-package-method-counts-for-androids.html).
 
-To use it:
+To run it with Ant:
 
     $ ant jar
+    $ ./dex-method-counts path/to/App.apk # or .zip or .dex
+
+or with Gradle:
+
+    $ ./gradlew assemble
     $ ./dex-method-counts path/to/App.apk # or .zip or .dex
 
 You'll see output of the form:
