@@ -5,12 +5,12 @@ Simple tool to output per-package method counts in an Android DEX executable gro
 To run it with Ant:
 
     $ ant jar
-    $ ./dex-method-counts path/to/App.apk # or .zip or .dex
+    $ ./dex-method-counts path/to/App.apk # or .zip or .dex or directory
 
 or with Gradle:
 
     $ ./gradlew assemble
-    $ ./dex-method-counts path/to/App.apk # or .zip or .dex
+    $ ./dex-method-counts path/to/App.apk # or .zip or .dex or directory
 
 You'll see output of the form:
 
@@ -30,6 +30,7 @@ You'll see output of the form:
             codebutler: 65
                 android_websockets: 65
             ...
+        Overall method count: 65490
 
 Supported options are:
 
