@@ -35,7 +35,6 @@ public class Main {
     private String packageFilter;
     private int maxDepth = Integer.MAX_VALUE;
     private DexMethodCounts.Filter filter = DexMethodCounts.Filter.ALL;
-    private String[] inputFileNames;
 
     /**
      * Entry point.
@@ -50,22 +49,8 @@ public class Main {
      */
     void run(String[] args) {
         try {
-            parseArgs(args);
-
-            List<String> fileNames = new ArrayList<String>();
-            for (String inputFileName : inputFileNames) {
-                File file = new File(inputFileName);
-                if (file.isDirectory()) {
-                    String dirPath = file.getAbsolutePath();
-                    for (String fileInDir: file.list()){
-                        fileNames.add(dirPath + File.separator + fileInDir);
-                    }
-                } else {
-                    fileNames.add(inputFileName);
-                }
-            }
-
-            for (String fileName : fileNames) {
+            String[] inputFileNames = parseArgs(args);
+            for (String fileName : collectFileNames(inputFileNames)) {
                 System.out.println("Processing " + fileName);
                 RandomAccessFile raf = openInputFile(fileName);
                 DexData dexData = new DexData(raf);
@@ -180,7 +165,7 @@ public class Main {
         return raf;
     }
 
-    void parseArgs(String[] args) {
+    String[] parseArgs(String[] args) {
         int idx;
 
         for (idx = 0; idx < args.length; idx++) {
@@ -210,8 +195,9 @@ public class Main {
         if (fileCount == 0) {
             throw new UsageException();
         }
-        inputFileNames = new String[fileCount];
+        String[] inputFileNames = new String[fileCount];
         System.arraycopy(args, idx, inputFileNames, 0, fileCount);
+        return inputFileNames;
     }
 
     void usage() {
@@ -223,6 +209,30 @@ public class Main {
             "  --package-filter=com.foo.bar\n" +
             "  --max-depth=N\n"
         );
+    }
+
+    /**
+     * Checks if input files array contain directories and
+     * adds it's contents to the file list if so.
+     * Otherwise just adds a file to the list.
+     *
+     * @return a List of file names to process
+     */
+
+    private List<String> collectFileNames(String[] inputFileNames) {
+        List<String> fileNames = new ArrayList<String>();
+        for (String inputFileName : inputFileNames) {
+            File file = new File(inputFileName);
+            if (file.isDirectory()) {
+                String dirPath = file.getAbsolutePath();
+                for (String fileInDir: file.list()){
+                    fileNames.add(dirPath + File.separator + fileInDir);
+                }
+            } else {
+                fileNames.add(inputFileName);
+            }
+        }
+        return fileNames;
     }
 
     private static class UsageException extends RuntimeException {}
