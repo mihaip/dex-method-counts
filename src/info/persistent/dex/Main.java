@@ -114,7 +114,7 @@ public class Main {
      *
      * @param fileName the name of the file to open
      * @return a RandomAccessFile for classes.dex, or null if the input file
-     * is not a zip archive
+     *         is not a zip archive
      * @throws IOException if the file isn't found, or it's a zip and
      *         classes.dex isn't found inside
      */
@@ -216,12 +216,12 @@ public class Main {
 
     void usage() {
         System.err.print(
-                "DEX per-package/class method counts v1.0\n" +
-                        "Usage: dex-method-counts [options] <file.{dex,apk,jar,directory}> ...\n" +
-                        "Options:\n" +
-                        "  --include-classes\n" +
-                        "  --package-filter=com.foo.bar\n" +
-                        "  --max-depth=N\n"
+            "DEX per-package/class method counts v1.0\n" +
+            "Usage: dex-method-counts [options] <file.{dex,apk,jar,directory}> ...\n" +
+            "Options:\n" +
+            "  --include-classes\n" +
+            "  --package-filter=com.foo.bar\n" +
+            "  --max-depth=N\n"
         );
     }
 
