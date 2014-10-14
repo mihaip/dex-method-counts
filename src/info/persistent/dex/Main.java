@@ -17,14 +17,19 @@ package info.persistent.dex;
 import com.android.dexdeps.DexData;
 import com.android.dexdeps.DexDataException;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 public class Main {
     private static final String CLASSES_DEX = "classes.dex";
-    private File directory;
 
     private boolean includeClasses;
     private String packageFilter;
@@ -46,18 +51,27 @@ public class Main {
     void run(String[] args) {
         try {
             parseArgs(args);
-            boolean first = true;
 
-            for (String fileName : inputFileNames) {
-                if (directory != null) {
-                    fileName = directory + File.separator + fileName;
+            List<String> fileNames = new ArrayList<String>();
+            for (String inputFileName : inputFileNames) {
+                File file = new File(inputFileName);
+                if (file.isDirectory()) {
+                    String dirPath = file.getAbsolutePath();
+                    for (String fileInDir: file.list()){
+                        fileNames.add(dirPath + File.separator + fileInDir);
+                    }
+                } else {
+                    fileNames.add(inputFileName);
                 }
+            }
+
+            for (String fileName : fileNames) {
                 System.out.println("Processing " + fileName);
                 RandomAccessFile raf = openInputFile(fileName);
                 DexData dexData = new DexData(raf);
                 dexData.load();
                 DexMethodCounts.generate(
-                        dexData, includeClasses, packageFilter, maxDepth, filter);
+                    dexData, includeClasses, packageFilter, maxDepth, filter);
                 raf.close();
             }
             System.out.println("Overall method count: " + DexMethodCounts.overallCount);
@@ -102,7 +116,7 @@ public class Main {
      * @return a RandomAccessFile for classes.dex, or null if the input file
      * is not a zip archive
      * @throws IOException if the file isn't found, or it's a zip and
-     *                     classes.dex isn't found inside
+     *         classes.dex isn't found inside
      */
     RandomAccessFile openInputFileAsZip(String fileName) throws IOException {
         ZipFile zipFile;
@@ -115,7 +129,7 @@ public class Main {
         } catch (FileNotFoundException fnfe) {
             /* not found, no point in retrying as non-zip */
             System.err.println("Unable to open '" + fileName + "': " +
-                    fnfe.getMessage());
+                fnfe.getMessage());
             throw fnfe;
         } catch (ZipException ze) {
             /* not a zip */
@@ -130,7 +144,7 @@ public class Main {
         ZipEntry entry = zipFile.getEntry(CLASSES_DEX);
         if (entry == null) {
             System.err.println("Unable to find '" + CLASSES_DEX +
-                    "' in '" + fileName + "'");
+                "' in '" + fileName + "'");
             zipFile.close();
             throw new ZipException();
         }
@@ -180,11 +194,11 @@ public class Main {
                 packageFilter = arg.substring(arg.indexOf('=') + 1);
             } else if (arg.startsWith("--max-depth=")) {
                 maxDepth =
-                        Integer.parseInt(arg.substring(arg.indexOf('=') + 1));
+                    Integer.parseInt(arg.substring(arg.indexOf('=') + 1));
             } else if (arg.startsWith("--filter=")) {
                 filter = Enum.valueOf(
-                        DexMethodCounts.Filter.class,
-                        arg.substring(arg.indexOf('=') + 1).toUpperCase());
+                    DexMethodCounts.Filter.class,
+                    arg.substring(arg.indexOf('=') + 1).toUpperCase());
             } else {
                 System.err.println("Unknown option '" + arg + "'");
                 throw new UsageException();
@@ -196,16 +210,8 @@ public class Main {
         if (fileCount == 0) {
             throw new UsageException();
         }
-
-        File first = new File(args[idx]);
-        if (!first.isDirectory()) {
-            inputFileNames = new String[fileCount];
-            System.arraycopy(args, idx, inputFileNames, 0, fileCount);
-        } else {
-            directory = first;
-            System.out.println("Input directory is: " + directory.getAbsolutePath());
-            inputFileNames = directory.list();
-        }
+        inputFileNames = new String[fileCount];
+        System.arraycopy(args, idx, inputFileNames, 0, fileCount);
     }
 
     void usage() {
@@ -219,6 +225,5 @@ public class Main {
         );
     }
 
-    private static class UsageException extends RuntimeException {
-    }
+    private static class UsageException extends RuntimeException {}
 }
