@@ -22,10 +22,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 
 public class Main {
     private static final String CLASSES_DEX = "classes.dex";
@@ -34,7 +35,6 @@ public class Main {
     private String packageFilter;
     private int maxDepth = Integer.MAX_VALUE;
     private DexMethodCounts.Filter filter = DexMethodCounts.Filter.ALL;
-    private String[] inputFileNames;
 
     /**
      * Entry point.
@@ -49,10 +49,9 @@ public class Main {
      */
     void run(String[] args) {
         try {
-            parseArgs(args);
-            boolean first = true;
-
-            for (String fileName : inputFileNames) {
+            String[] inputFileNames = parseArgs(args);
+            for (String fileName : collectFileNames(inputFileNames)) {
+                System.out.println("Processing " + fileName);
                 RandomAccessFile raf = openInputFile(fileName);
                 DexData dexData = new DexData(raf);
                 dexData.load();
@@ -60,6 +59,7 @@ public class Main {
                     dexData, includeClasses, packageFilter, maxDepth, filter);
                 raf.close();
             }
+            System.out.println("Overall method count: " + DexMethodCounts.overallCount);
         } catch (UsageException ue) {
             usage();
             System.exit(2);
@@ -165,7 +165,7 @@ public class Main {
         return raf;
     }
 
-    void parseArgs(String[] args) {
+    String[] parseArgs(String[] args) {
         int idx;
 
         for (idx = 0; idx < args.length; idx++) {
@@ -195,19 +195,44 @@ public class Main {
         if (fileCount == 0) {
             throw new UsageException();
         }
-
-        inputFileNames = new String[fileCount];
+        String[] inputFileNames = new String[fileCount];
         System.arraycopy(args, idx, inputFileNames, 0, fileCount);
+        return inputFileNames;
     }
 
     void usage() {
         System.err.print(
             "DEX per-package/class method counts v1.0\n" +
-            "Usage: dex-method-counts [options] <file.{dex,apk,jar}> ...\n" +
+            "Usage: dex-method-counts [options] <file.{dex,apk,jar,directory}> ...\n" +
             "Options:\n" +
             "  --include-classes\n" +
             "  --package-filter=com.foo.bar\n" +
-            "  --max-depth=N\n");
+            "  --max-depth=N\n"
+        );
+    }
+
+    /**
+     * Checks if input files array contain directories and
+     * adds it's contents to the file list if so.
+     * Otherwise just adds a file to the list.
+     *
+     * @return a List of file names to process
+     */
+
+    private List<String> collectFileNames(String[] inputFileNames) {
+        List<String> fileNames = new ArrayList<String>();
+        for (String inputFileName : inputFileNames) {
+            File file = new File(inputFileName);
+            if (file.isDirectory()) {
+                String dirPath = file.getAbsolutePath();
+                for (String fileInDir: file.list()){
+                    fileNames.add(dirPath + File.separator + fileInDir);
+                }
+            } else {
+                fileNames.add(inputFileName);
+            }
+        }
+        return fileNames;
     }
 
     private static class UsageException extends RuntimeException {}

@@ -29,6 +29,7 @@ import java.util.TreeMap;
 
 public class DexMethodCounts {
     private static final PrintStream out = System.out;
+    public static int overallCount = 0;
 
     enum Filter {
         ALL,
@@ -43,6 +44,7 @@ public class DexMethodCounts {
         void output(String indent) {
             if (indent.length() == 0) {
                 out.println("<root>: " + count);
+                overallCount += count;
             }
             indent += "    ";
             for (String name : children.navigableKeySet()) {
