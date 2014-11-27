@@ -14,7 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-libdir="build/jar"
+curdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+libdir="$curdir/build/jar"
 jarfile="dex-method-counts.jar"
 if [ ! -r "$libdir/$jarfile" ]
 then
