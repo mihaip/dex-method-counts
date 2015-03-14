@@ -23,14 +23,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 public class Main {
-    private static final String CLASSES_DEX = "classes.dex";
-
     private boolean includeClasses;
     private String packageFilter;
     private int maxDepth = Integer.MAX_VALUE;
@@ -52,12 +51,18 @@ public class Main {
             String[] inputFileNames = parseArgs(args);
             for (String fileName : collectFileNames(inputFileNames)) {
                 System.out.println("Processing " + fileName);
-                RandomAccessFile raf = openInputFile(fileName);
-                DexData dexData = new DexData(raf);
-                dexData.load();
-                DexMethodCounts.generate(
-                    dexData, includeClasses, packageFilter, maxDepth, filter);
-                raf.close();
+                List<RandomAccessFile> dexFiles = openInputFiles(fileName);
+                DexMethodCounts.Node packageTree = new DexMethodCounts.Node();
+
+                for (RandomAccessFile dexFile : dexFiles) {
+                    DexData dexData = new DexData(dexFile);
+                    dexData.load();
+                    DexMethodCounts.generate(
+                            packageTree, dexData, includeClasses, packageFilter, maxDepth, filter);
+                    dexFile.close();
+                }
+
+                packageTree.output("");
             }
             System.out.println("Overall method count: " + DexMethodCounts.overallCount);
         } catch (UsageException ue) {
@@ -81,16 +86,17 @@ public class Main {
      *
      * @param fileName the name of the file to open
      */
-    RandomAccessFile openInputFile(String fileName) throws IOException {
-        RandomAccessFile raf;
+    List<RandomAccessFile> openInputFiles(String fileName) throws IOException {
+        List<RandomAccessFile> dexFiles = new ArrayList<RandomAccessFile>();
 
-        raf = openInputFileAsZip(fileName);
-        if (raf == null) {
+        openInputFileAsZip(fileName, dexFiles);
+        if (dexFiles.size() == 0) {
             File inputFile = new File(fileName);
-            raf = new RandomAccessFile(inputFile, "r");
+            RandomAccessFile dexFile = new RandomAccessFile(inputFile, "r");
+            dexFiles.add(dexFile);
         }
 
-        return raf;
+        return dexFiles;
     }
 
     /**
@@ -99,11 +105,11 @@ public class Main {
      *
      * @param fileName the name of the file to open
      * @return a RandomAccessFile for classes.dex, or null if the input file
-     *         is not a zip archive
+     * is not a zip archive
      * @throws IOException if the file isn't found, or it's a zip and
-     *         classes.dex isn't found inside
+     *                     classes.dex isn't found inside
      */
-    RandomAccessFile openInputFileAsZip(String fileName) throws IOException {
+    void openInputFileAsZip(String fileName, List<RandomAccessFile> dexFiles) throws IOException {
         ZipFile zipFile;
 
         /*
@@ -114,26 +120,31 @@ public class Main {
         } catch (FileNotFoundException fnfe) {
             /* not found, no point in retrying as non-zip */
             System.err.println("Unable to open '" + fileName + "': " +
-                fnfe.getMessage());
+                    fnfe.getMessage());
             throw fnfe;
         } catch (ZipException ze) {
             /* not a zip */
-            return null;
+            return;
         }
 
+        // open and add all files matching "classes.*\.dex" in the zip file
+        for (Enumeration entries = zipFile.entries(); entries.hasMoreElements();) {
+            ZipEntry entry = (ZipEntry) entries.nextElement();
+
+            if (entry.getName().matches("classes.*\\.dex")) {
+                dexFiles.add(openDexFile(zipFile, entry));
+            }
+        }
+
+        zipFile.close();
+    }
+
+    RandomAccessFile openDexFile(ZipFile zipFile, ZipEntry entry) throws IOException  {
         /*
          * We know it's a zip; see if there's anything useful inside.  A
          * failure here results in some type of IOException (of which
          * ZipException is a subclass).
          */
-        ZipEntry entry = zipFile.getEntry(CLASSES_DEX);
-        if (entry == null) {
-            System.err.println("Unable to find '" + CLASSES_DEX +
-                "' in '" + fileName + "'");
-            zipFile.close();
-            throw new ZipException();
-        }
-
         InputStream zis = zipFile.getInputStream(entry);
 
         /*
@@ -142,7 +153,7 @@ public class Main {
          */
         File tempFile = File.createTempFile("dexdeps", ".dex");
         //System.out.println("+++ using temp " + tempFile);
-        RandomAccessFile raf = new RandomAccessFile(tempFile, "rw");
+        RandomAccessFile dexFile = new RandomAccessFile(tempFile, "rw");
         tempFile.delete();
 
         /*
@@ -156,13 +167,12 @@ public class Main {
             if (actual == -1)
                 break;
 
-            raf.write(copyBuf, 0, actual);
+            dexFile.write(copyBuf, 0, actual);
         }
 
-        zis.close();
-        raf.seek(0);
+        dexFile.seek(0);
 
-        return raf;
+        return dexFile;
     }
 
     String[] parseArgs(String[] args) {
