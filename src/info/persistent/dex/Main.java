@@ -35,17 +35,11 @@ public class Main {
     private int maxDepth = Integer.MAX_VALUE;
     private DexMethodCounts.Filter filter = DexMethodCounts.Filter.ALL;
 
-    /**
-     * Entry point.
-     */
     public static void main(String[] args) {
         Main main = new Main();
         main.run(args);
     }
 
-    /**
-     * Start things up.
-     */
     void run(String[] args) {
         try {
             String[] inputFileNames = parseArgs(args);
@@ -83,8 +77,6 @@ public class Main {
      * Opens an input file, which could be a .dex or a .jar/.apk with a
      * classes.dex inside.  If the latter, we extract the contents to a
      * temporary file.
-     *
-     * @param fileName the name of the file to open
      */
     List<RandomAccessFile> openInputFiles(String fileName) throws IOException {
         List<RandomAccessFile> dexFiles = new ArrayList<RandomAccessFile>();
@@ -102,32 +94,24 @@ public class Main {
     /**
      * Tries to open an input file as a Zip archive (jar/apk) with a
      * "classes.dex" inside.
-     *
-     * @param fileName the name of the file to open
-     * @return a RandomAccessFile for classes.dex, or null if the input file
-     * is not a zip archive
-     * @throws IOException if the file isn't found, or it's a zip and
-     *                     classes.dex isn't found inside
      */
     void openInputFileAsZip(String fileName, List<RandomAccessFile> dexFiles) throws IOException {
         ZipFile zipFile;
 
-        /*
-         * Try it as a zip file.
-         */
+        // Try it as a zip file.
         try {
             zipFile = new ZipFile(fileName);
         } catch (FileNotFoundException fnfe) {
-            /* not found, no point in retrying as non-zip */
+            // not found, no point in retrying as non-zip.
             System.err.println("Unable to open '" + fileName + "': " +
                     fnfe.getMessage());
             throw fnfe;
         } catch (ZipException ze) {
-            /* not a zip */
+            // not a zip
             return;
         }
 
-        // open and add all files matching "classes.*\.dex" in the zip file
+        // Open and add all files matching "classes.*\.dex" in the zip file.
         for (ZipEntry entry : Collections.list(zipFile.entries())) {
             if (entry.getName().matches("classes.*\\.dex")) {
                 dexFiles.add(openDexFile(zipFile, entry));
@@ -138,25 +122,18 @@ public class Main {
     }
 
     RandomAccessFile openDexFile(ZipFile zipFile, ZipEntry entry) throws IOException  {
-        /*
-         * We know it's a zip; see if there's anything useful inside.  A
-         * failure here results in some type of IOException (of which
-         * ZipException is a subclass).
-         */
+        // We know it's a zip; see if there's anything useful inside.  A
+        // failure here results in some type of IOException (of which
+        // ZipException is a subclass).
         InputStream zis = zipFile.getInputStream(entry);
 
-        /*
-         * Create a temp file to hold the DEX data, open it, and delete it
-         * to ensure it doesn't hang around if we fail.
-         */
+        // Create a temp file to hold the DEX data, open it, and delete it
+        // to ensure it doesn't hang around if we fail.
         File tempFile = File.createTempFile("dexdeps", ".dex");
-        //System.out.println("+++ using temp " + tempFile);
         RandomAccessFile dexFile = new RandomAccessFile(tempFile, "rw");
         tempFile.delete();
 
-        /*
-         * Copy all data from input stream to output file.
-         */
+        // Copy all data from input stream to output file.
         byte copyBuf[] = new byte[32768];
         int actual;
 
@@ -173,7 +150,7 @@ public class Main {
         return dexFile;
     }
 
-    String[] parseArgs(String[] args) {
+    private String[] parseArgs(String[] args) {
         int idx;
 
         for (idx = 0; idx < args.length; idx++) {
@@ -208,7 +185,7 @@ public class Main {
         return inputFileNames;
     }
 
-    void usage() {
+    private void usage() {
         System.err.print(
             "DEX per-package/class method counts v1.0\n" +
             "Usage: dex-method-counts [options] <file.{dex,apk,jar,directory}> ...\n" +
@@ -226,7 +203,6 @@ public class Main {
      *
      * @return a List of file names to process
      */
-
     private List<String> collectFileNames(String[] inputFileNames) {
         List<String> fileNames = new ArrayList<String>();
         for (String inputFileName : inputFileNames) {
