@@ -37,7 +37,7 @@ public class DexMethodCounts {
         REFERENCED_ONLY
     }
 
-    private static class Node {
+    protected static class Node {
         int count = 0;
         NavigableMap<String, Node> children = new TreeMap<String, Node>();
 
@@ -56,10 +56,9 @@ public class DexMethodCounts {
     }
 
     public static void generate(
-            DexData dexData, boolean includeClasses, String packageFilter,
-            int maxDepth, Filter filter) {
+            Node packageTree, DexData dexData, boolean includeClasses,
+            String packageFilter,int maxDepth, Filter filter) {
         MethodRef[] methodRefs = getMethodRefs(dexData, filter);
-        Node packageTree = new Node();
 
         for (MethodRef methodRef : methodRefs) {
             String classDescriptor = methodRef.getDeclClassName();
@@ -85,8 +84,6 @@ public class DexMethodCounts {
             }
             packageNode.count++;
         }
-
-        packageTree.output("");
     }
 
     private static MethodRef[] getMethodRefs(DexData dexData, Filter filter) {
