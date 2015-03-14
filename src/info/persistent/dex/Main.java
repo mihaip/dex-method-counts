@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.Collections;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
@@ -128,9 +128,7 @@ public class Main {
         }
 
         // open and add all files matching "classes.*\.dex" in the zip file
-        for (Enumeration entries = zipFile.entries(); entries.hasMoreElements();) {
-            ZipEntry entry = (ZipEntry) entries.nextElement();
-
+        for (ZipEntry entry : Collections.list(zipFile.entries())) {
             if (entry.getName().matches("classes.*\\.dex")) {
                 dexFiles.add(openDexFile(zipFile, entry));
             }
