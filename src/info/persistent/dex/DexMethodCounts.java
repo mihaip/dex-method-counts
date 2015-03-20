@@ -23,13 +23,29 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
 
 public class DexMethodCounts {
     private static final PrintStream out = System.out;
-    public static int overallCount = 0;
+    public int overallCount = 0;
+    private final OutputStyle outputStyle;
+    private final Node packageTree;
+    private final Map<String, IntHolder> packageCount;
+
+    DexMethodCounts(OutputStyle outputStyle) {
+        this.outputStyle = outputStyle;
+        packageTree = this.outputStyle == OutputStyle.TREE ? new Node() : null;
+        packageCount = this.outputStyle == OutputStyle.FLAT
+                ? new TreeMap<String, IntHolder>() : null;
+    }
+
+    // Mutable int holder
+    private class IntHolder {
+        int value;
+    }
 
     enum Filter {
         ALL,
@@ -37,14 +53,44 @@ public class DexMethodCounts {
         REFERENCED_ONLY
     }
 
-    protected static class Node {
+    enum OutputStyle {
+        TREE {
+            @Override
+            void output(DexMethodCounts counts) {
+                counts.packageTree.output("");
+            }
+        },
+        FLAT {
+            @Override
+            void output(DexMethodCounts counts) {
+                for (Map.Entry<String, IntHolder> e : counts.packageCount.entrySet()) {
+                    String packageName = e.getKey();
+                    if (packageName == "") {
+                        packageName = "<no package>";
+                    }
+                    System.out.printf("%6s %s\n", e.getValue().value, packageName);
+                }
+            }
+        };
+
+        abstract void output(DexMethodCounts counts);
+    }
+
+    void output() {
+        outputStyle.output(this);
+    }
+
+    int getOverallCount() {
+        return overallCount;
+    }
+
+    private static class Node {
         int count = 0;
         NavigableMap<String, Node> children = new TreeMap<String, Node>();
 
         void output(String indent) {
             if (indent.length() == 0) {
                 out.println("<root>: " + count);
-                overallCount += count;
             }
             indent += "    ";
             for (String name : children.navigableKeySet()) {
@@ -55,8 +101,8 @@ public class DexMethodCounts {
         }
     }
 
-    public static void generate(
-            Node packageTree, DexData dexData, boolean includeClasses,
+    public void generate(
+            DexData dexData, boolean includeClasses,
             String packageFilter,int maxDepth, Filter filter) {
         MethodRef[] methodRefs = getMethodRefs(dexData, filter);
 
@@ -69,20 +115,30 @@ public class DexMethodCounts {
                     !packageName.startsWith(packageFilter)) {
                 continue;
             }
-            String packageNamePieces[] = packageName.split("\\.");
-            Node packageNode = packageTree;
-            for (int i = 0; i < packageNamePieces.length && i < maxDepth; i++) {
-                packageNode.count++;
-                String name = packageNamePieces[i];
-                if (packageNode.children.containsKey(name)) {
-                    packageNode = packageNode.children.get(name);
-                } else {
-                    Node childPackageNode = new Node();
-                    packageNode.children.put(name, childPackageNode);
-                    packageNode = childPackageNode;
+            overallCount++;
+            if (outputStyle == OutputStyle.TREE) {
+                String packageNamePieces[] = packageName.split("\\.");
+                Node packageNode = packageTree;
+                for (int i = 0; i < packageNamePieces.length && i < maxDepth; i++) {
+                    packageNode.count++;
+                    String name = packageNamePieces[i];
+                    if (packageNode.children.containsKey(name)) {
+                        packageNode = packageNode.children.get(name);
+                    } else {
+                        Node childPackageNode = new Node();
+                        packageNode.children.put(name, childPackageNode);
+                        packageNode = childPackageNode;
+                    }
                 }
+                packageNode.count++;
+            } else if (outputStyle == OutputStyle.FLAT) {
+                IntHolder count = packageCount.get(packageName);
+                if (count == null) {
+                    count = new IntHolder();
+                    packageCount.put(packageName, count);
+                }
+                count.value++;
             }
-            packageNode.count++;
         }
     }
 
