@@ -12,6 +12,11 @@ or with Gradle:
     $ ./gradlew assemble
     $ ./dex-method-counts path/to/App.apk # or .zip or .dex or directory
 
+on Windows:
+
+    $ gradlew assemble
+    $ java -jar path\to\build\jar\dex-method-counts.jar path\to\App.apk
+
 You'll see output of the form:
 
     Read in 65490 method IDs.
