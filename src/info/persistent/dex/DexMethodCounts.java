@@ -21,6 +21,7 @@ import com.android.dexdeps.Output;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NavigableMap;
@@ -98,9 +99,7 @@ public class DexMethodCounts {
             " external class references.");
         Set<MethodRef> externalMethodRefs = new HashSet<MethodRef>();
         for (ClassRef classRef : externalClassRefs) {
-            for (MethodRef methodRef : classRef.getMethodArray()) {
-                externalMethodRefs.add(methodRef);
-            }
+            Collections.addAll(externalMethodRefs, classRef.getMethodArray());
         }
         out.println("Read in " + externalMethodRefs.size() +
             " external method references.");
