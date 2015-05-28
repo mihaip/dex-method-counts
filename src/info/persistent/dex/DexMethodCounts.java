@@ -79,6 +79,11 @@ public class DexMethodCounts {
                     packageNode = packageNode.children.get(name);
                 } else {
                     Node childPackageNode = new Node();
+                    if (name.length() == 0) {
+                        // This method is declared in a class that is part of the default package.
+                        // Typical examples are methods that operate on arrays of primitive data types.
+                        name = "<default>";
+                    }
                     packageNode.children.put(name, childPackageNode);
                     packageNode = childPackageNode;
                 }
