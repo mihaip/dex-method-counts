@@ -14,10 +14,7 @@
 
 package info.persistent.dex;
 
-import com.android.dexdeps.ClassRef;
-import com.android.dexdeps.DexData;
-import com.android.dexdeps.FieldRef;
-import com.android.dexdeps.Output;
+import com.android.dexdeps.*;
 
 import java.util.*;
 
@@ -33,38 +30,48 @@ public class DexFieldCounts extends DexCount {
 
         for (FieldRef fieldRef : fieldRefs) {
             String classDescriptor = fieldRef.getDeclClassName();
-            String packageName = includeClasses ? Output.descriptorToDot(classDescriptor).replace(
-                    '$', '.') : Output.packageNameOnly(classDescriptor);
-            if (packageFilter != null && !packageName.startsWith(packageFilter)) {
+            String packageName = includeClasses ?
+                    Output.descriptorToDot(classDescriptor).replace('$', '.') :
+                    Output.packageNameOnly(classDescriptor);
+            if (packageFilter != null &&
+                    !packageName.startsWith(packageFilter)) {
                 continue;
             }
             overallCount++;
-            String packageNamePieces[] = packageName.split("\\.");
-            DexCount.Node packageNode = packageTree;
-            for (int i = 0; i < packageNamePieces.length && i < maxDepth; i++) {
-                packageNode.count++;
-                String name = packageNamePieces[i];
-                if (packageNode.children.containsKey(name)) {
-                    packageNode = packageNode.children.get(name);
-                } else {
-                    DexCount.Node childPackageNode = new DexCount.Node();
-                    if (name.length() == 0) {
-                        // This method is declared in a class that is part of the default package.
-                        // Typical examples are methods that operate on arrays of primitive data
-                        // types.
-                        name = "<default>";
+            if (outputStyle == OutputStyle.TREE) {
+                String packageNamePieces[] = packageName.split("\\.");
+                Node packageNode = packageTree;
+                for (int i = 0; i < packageNamePieces.length && i < maxDepth; i++) {
+                    packageNode.count++;
+                    String name = packageNamePieces[i];
+                    if (packageNode.children.containsKey(name)) {
+                        packageNode = packageNode.children.get(name);
+                    } else {
+                        Node childPackageNode = new Node();
+                        if (name.length() == 0) {
+                            // This method is declared in a class that is part of the default package.
+                            // Typical examples are methods that operate on arrays of primitive data types.
+                            name = "<default>";
+                        }
+                        packageNode.children.put(name, childPackageNode);
+                        packageNode = childPackageNode;
                     }
-                    packageNode.children.put(name, childPackageNode);
-                    packageNode = childPackageNode;
                 }
+                packageNode.count++;
+            } else if (outputStyle == OutputStyle.FLAT) {
+                IntHolder count = packageCount.get(packageName);
+                if (count == null) {
+                    count = new IntHolder();
+                    packageCount.put(packageName, count);
+                }
+                count.value++;
             }
-            packageNode.count++;
         }
     }
 
     private static FieldRef[] getFieldRefs(DexData dexData, Filter filter) {
         FieldRef[] fieldRefs = dexData.getFieldRefs();
-        out.println("Read in " + fieldRefs.length + " method IDs.");
+        out.println("Read in " + fieldRefs.length + " field IDs.");
         if (filter == Filter.ALL) {
             return fieldRefs;
         }
