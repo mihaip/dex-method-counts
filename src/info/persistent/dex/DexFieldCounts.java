@@ -49,8 +49,7 @@ public class DexFieldCounts extends DexCount {
                     } else {
                         Node childPackageNode = new Node();
                         if (name.length() == 0) {
-                            // This method is declared in a class that is part of the default package.
-                            // Typical examples are methods that operate on arrays of primitive data types.
+                            // This field is declared in a class that is part of the default package.
                             name = "<default>";
                         }
                         packageNode.children.put(name, childPackageNode);
