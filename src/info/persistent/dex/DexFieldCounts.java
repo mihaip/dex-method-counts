@@ -14,25 +14,22 @@
 
 package info.persistent.dex;
 
-import com.android.dexdeps.ClassRef;
-import com.android.dexdeps.DexData;
-import com.android.dexdeps.MethodRef;
-import com.android.dexdeps.Output;
+import com.android.dexdeps.*;
 
 import java.util.*;
 
-public class DexMethodCounts extends DexCount {
+public class DexFieldCounts extends DexCount {
 
-    DexMethodCounts(OutputStyle outputStyle) {
+    DexFieldCounts(OutputStyle outputStyle) {
         super(outputStyle);
     }
 
     @Override
     public void generate(DexData dexData, boolean includeClasses, String packageFilter, int maxDepth, Filter filter) {
-        MethodRef[] methodRefs = getMethodRefs(dexData, filter);
+        FieldRef[] fieldRefs = getFieldRefs(dexData, filter);
 
-        for (MethodRef methodRef : methodRefs) {
-            String classDescriptor = methodRef.getDeclClassName();
+        for (FieldRef fieldRef : fieldRefs) {
+            String classDescriptor = fieldRef.getDeclClassName();
             String packageName = includeClasses ?
                     Output.descriptorToDot(classDescriptor).replace('$', '.') :
                     Output.packageNameOnly(classDescriptor);
@@ -72,34 +69,32 @@ public class DexMethodCounts extends DexCount {
         }
     }
 
-    private static MethodRef[] getMethodRefs(DexData dexData, Filter filter) {
-        MethodRef[] methodRefs = dexData.getMethodRefs();
-        out.println("Read in " + methodRefs.length + " method IDs.");
+    private static FieldRef[] getFieldRefs(DexData dexData, Filter filter) {
+        FieldRef[] fieldRefs = dexData.getFieldRefs();
+        out.println("Read in " + fieldRefs.length + " field IDs.");
         if (filter == Filter.ALL) {
-            return methodRefs;
+            return fieldRefs;
         }
 
         ClassRef[] externalClassRefs = dexData.getExternalReferences();
-        out.println("Read in " + externalClassRefs.length +
-                " external class references.");
-        Set<MethodRef> externalMethodRefs = new HashSet<MethodRef>();
+        out.println("Read in " + externalClassRefs.length + " external class references.");
+        Set<FieldRef> externalFieldRefs = new HashSet<FieldRef>();
         for (ClassRef classRef : externalClassRefs) {
-            Collections.addAll(externalMethodRefs, classRef.getMethodArray());
+            Collections.addAll(externalFieldRefs, classRef.getFieldArray());
         }
-        out.println("Read in " + externalMethodRefs.size() +
-                " external method references.");
-        List<MethodRef> filteredMethodRefs = new ArrayList<MethodRef>();
-        for (MethodRef methodRef : methodRefs) {
-            boolean isExternal = externalMethodRefs.contains(methodRef);
-            if ((filter == Filter.DEFINED_ONLY && !isExternal) ||
-                    (filter == Filter.REFERENCED_ONLY && isExternal)) {
-                filteredMethodRefs.add(methodRef);
+        out.println("Read in " + externalFieldRefs.size() + " external field references.");
+        List<FieldRef> filteredFieldRefs = new ArrayList<FieldRef>();
+        for (FieldRef FieldRef : fieldRefs) {
+            boolean isExternal = externalFieldRefs.contains(FieldRef);
+            if ((filter == Filter.DEFINED_ONLY && !isExternal)
+                    || (filter == Filter.REFERENCED_ONLY && isExternal)) {
+                filteredFieldRefs.add(FieldRef);
             }
         }
-        out.println("Filtered to " + filteredMethodRefs.size() + " " +
-                (filter == Filter.DEFINED_ONLY ? "defined" : "referenced") +
-                " method IDs.");
-        return filteredMethodRefs.toArray(
-                new MethodRef[filteredMethodRefs.size()]);
+        out.println("Filtered to " + filteredFieldRefs.size() + " " +
+                (filter == Filter.DEFINED_ONLY ? "defined" : "referenced") + " field IDs.");
+        return filteredFieldRefs.toArray(new FieldRef[filteredFieldRefs.size()]);
     }
+
+
 }
