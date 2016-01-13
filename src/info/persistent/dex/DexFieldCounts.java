@@ -70,7 +70,7 @@ public class DexFieldCounts extends DexCount {
 
     private static FieldRef[] getFieldRefs(DexData dexData, Filter filter) {
         FieldRef[] fieldRefs = dexData.getFieldRefs();
-        out.println("Read in " + fieldRefs.length + " field IDs.");
+        out.println("Read in " + fieldRefs.length + " field IDs from " + dexData.getDexFileName() + ".");
         if (filter == Filter.ALL) {
             return fieldRefs;
         }

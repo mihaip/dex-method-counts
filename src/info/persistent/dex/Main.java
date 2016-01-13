@@ -17,14 +17,8 @@ package info.persistent.dex;
 import com.android.dexdeps.DexData;
 import com.android.dexdeps.DexDataException;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -54,10 +48,11 @@ public class Main {
                 } else {
                     counts = new DexMethodCounts(outputStyle);
                 }
-                List<RandomAccessFile> dexFiles = openInputFiles(fileName);
+                Map<String, RandomAccessFile> dexFiles = openInputFiles(fileName);
 
-                for (RandomAccessFile dexFile : dexFiles) {
-                    DexData dexData = new DexData(dexFile);
+                for (String dexFilenName : dexFiles.keySet()) {
+                    RandomAccessFile dexFile = dexFiles.get(dexFilenName);
+                    DexData dexData = new DexData(dexFilenName, dexFile);
                     dexData.load();
                     counts.generate(dexData, includeClasses, packageFilter, maxDepth, filter);
                     dexFile.close();
@@ -85,14 +80,14 @@ public class Main {
      * classes.dex inside.  If the latter, we extract the contents to a
      * temporary file.
      */
-    List<RandomAccessFile> openInputFiles(String fileName) throws IOException {
-        List<RandomAccessFile> dexFiles = new ArrayList<RandomAccessFile>();
+    Map<String,RandomAccessFile> openInputFiles(String fileName) throws IOException {
+        Map<String,RandomAccessFile> dexFiles = new HashMap<String, RandomAccessFile>();
 
         openInputFileAsZip(fileName, dexFiles);
         if (dexFiles.size() == 0) {
             File inputFile = new File(fileName);
             RandomAccessFile dexFile = new RandomAccessFile(inputFile, "r");
-            dexFiles.add(dexFile);
+            dexFiles.put(fileName, dexFile);
         }
 
         return dexFiles;
@@ -102,7 +97,7 @@ public class Main {
      * Tries to open an input file as a Zip archive (jar/apk) with a
      * "classes.dex" inside.
      */
-    void openInputFileAsZip(String fileName, List<RandomAccessFile> dexFiles) throws IOException {
+    void openInputFileAsZip(String fileName, Map<String,RandomAccessFile> dexFiles) throws IOException {
         ZipFile zipFile;
 
         // Try it as a zip file.
@@ -121,7 +116,7 @@ public class Main {
         // Open and add all files matching "classes.*\.dex" in the zip file.
         for (ZipEntry entry : Collections.list(zipFile.entries())) {
             if (entry.getName().matches("classes.*\\.dex")) {
-                dexFiles.add(openDexFile(zipFile, entry));
+                dexFiles.put(entry.getName(), openDexFile(zipFile, entry));
             }
         }
 

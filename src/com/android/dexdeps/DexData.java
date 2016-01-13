@@ -24,6 +24,7 @@ import java.util.Arrays;
  * Data extracted from a DEX file.
  */
 public class DexData {
+    private String mDexFileName;
     private RandomAccessFile mDexFile;
     private HeaderItem mHeaderItem;
     private String[] mStrings;              // strings from string_data_*
@@ -39,8 +40,9 @@ public class DexData {
     /**
      * Constructs a new DexData for this file.
      */
-    public DexData(RandomAccessFile raf) {
-        mDexFile = raf;
+    public DexData(String dexFileName, RandomAccessFile randomAccessFile) {
+        mDexFile = randomAccessFile;
+        mDexFileName = dexFileName;
     }
 
     /**
@@ -60,6 +62,10 @@ public class DexData {
         loadClassDefs();
 
         markInternalClasses();
+    }
+
+    public String getDexFileName() {
+        return mDexFileName;
     }
 
     /**
