@@ -200,7 +200,7 @@ public class Main {
 
     private void usage() {
         System.err.print(
-            "DEX per-package/class method counts v1.0\n" +
+            "DEX per-package/class method counts v1.5\n" +
             "Usage: dex-method-counts [options] <file.{dex,apk,jar,directory}> ...\n" +
             "Options:\n" +
             "  --count-fields\n" +
