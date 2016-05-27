@@ -15,7 +15,7 @@ or with Gradle:
 on Windows:
 
     $ gradlew assemble
-    $ java -jar path\to\build\jar\dex-method-counts.jar path\to\App.apk
+    $ dex-method-counts.bat path\to\App.apk
 
 You'll see output of the form:
 
