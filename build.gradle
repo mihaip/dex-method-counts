@@ -1,3 +1,16 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+        mavenLocal()
+    }
+}
+repositories {
+    jcenter()
+    mavenCentral()
+    mavenLocal()
+}
+
 apply plugin: 'application'
 
 mainClassName = "info.persistent.dex.Main"
@@ -12,9 +25,34 @@ sourceSets {
 }
 
 jar {
-    // Redirect output to match launcher script
-    destinationDir = file('build/jar')
     manifest {
         attributes("Main-Class": mainClassName)
     }
 }
+
+
+task postTask() << {
+    description "Redirect output to match launcher script"
+    new File('build/jar/').mkdirs()
+    copy {
+        from 'build/libs/'
+        into 'build/jar/'
+        rename { filename ->
+            filename.replace("-"+project.property('pom.version'), "")
+        }
+    }
+}
+
+assemble.finalizedBy postTask
+
+
+project.group = ( project.hasProperty('pom.groupId')
+        ? project.property('pom.groupId') : "" )
+
+project.version =
+        ( project.hasProperty('pom.version') ? project.property('pom.version') : "1.0" )
+
+apply from: 'https://raw.githubusercontent.com/chrisdoyle/gradle-fury/master/gradle/maven-support.gradle'
+//optional if you want to store your password encrypted
+//apply from: 'https://raw.githubusercontent.com/chrisdoyle/gradle-fury/master/gradle/encryption.gradle'
+
