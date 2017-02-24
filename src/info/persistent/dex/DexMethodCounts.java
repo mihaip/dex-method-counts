@@ -74,7 +74,7 @@ public class DexMethodCounts extends DexCount {
 
     private static MethodRef[] getMethodRefs(DexData dexData, Filter filter) {
         MethodRef[] methodRefs = dexData.getMethodRefs();
-        out.println("Read in " + methodRefs.length + " method IDs.");
+        out.println("Read in " + methodRefs.length + " method IDs from " + dexData.getDexFileName() + ".");
         if (filter == Filter.ALL) {
             return methodRefs;
         }
