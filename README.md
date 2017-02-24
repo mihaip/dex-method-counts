@@ -48,3 +48,21 @@ Supported options are:
 
 The DEX file parsing is based on the `dexdeps` tool from
 [the Android source tree](https://android.googlesource.com/platform/dalvik.git/+/master/tools/dexdeps/).
+
+
+# To prepare a release
+
+## Update the version
+
+Edit `gradle.properties` and set the new `pom.version` number.
+
+## Set your credentials in `local.properties`
+
+## Build and publish
+Run the following
+````
+./gradlew install -Pprofile=javadoc,sources
+./gradlew publishArtifacts
+````
+
+If successful, commit the version changes and tag. Then update the version number and commit.
