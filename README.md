@@ -44,6 +44,7 @@ Supported options are:
 * `--package-filter=...`: Only consider methods whose fully qualified name starts with this prefix.
 * `--max-depth=...`: Limit how far into package paths (or inner classes, with `--include-classes`) counts should be reported for.
 * `--filter=[all|defined_only|referenced_only]`: Whether to count all methods (the default), just those defined in the input file, or just those that are referenced in it. Note that referenced methods count against the 64K method limit too.
+* `--compare`: Prints a comparison counts between the second and first APK. Note that the comparison will not be accurate if either of the APKs has been obfuscated using ProGuard.
 * `--output-style=[flat|tree]`: Print the output as a list or as an indented tree.
 
 The DEX file parsing is based on the `dexdeps` tool from

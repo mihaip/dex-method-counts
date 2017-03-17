@@ -17,9 +17,9 @@ package info.persistent.dex;
 import com.android.dexdeps.DexData;
 
 import java.io.PrintStream;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.TreeMap;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.*;
 
 public abstract class DexCount {
 
@@ -56,25 +56,67 @@ public abstract class DexCount {
             void output(DexCount counts) {
                 counts.packageTree.output("");
             }
+
+            @Override
+            void output(DexCount counts, DexCount comparedTo) {
+                counts.packageTree.output("", comparedTo.packageTree);
+            }
         },
         FLAT {
             @Override
             void output(DexCount counts) {
                 for (Map.Entry<String, IntHolder> e : counts.packageCount.entrySet()) {
                     String packageName = e.getKey();
-                    if (packageName == "") {
+                    if (packageName.equals("")) {
                         packageName = "<no package>";
                     }
                     System.out.printf("%6s %s\n", e.getValue().value, packageName);
                 }
             }
+
+            @Override
+            void output(DexCount counts, DexCount comparedTo) {
+                for (Map.Entry<String, IntHolder> e : counts.packageCount.entrySet()) {
+                    String packageName = e.getKey();
+                    final IntHolder comparedToValue;
+
+                    if (packageName.equals("")) {
+                        packageName = "<no package>";
+                        comparedToValue = null;
+                    } else {
+                        comparedToValue = comparedTo.packageCount.get(packageName);
+                    }
+
+                    final int diff = (comparedToValue == null)
+                            ? e.getValue().value
+                            : e.getValue().value - comparedToValue.value;
+                    System.out.printf(
+                            "%6d (%+6d) %s\n",
+                            e.getValue().value,
+                            diff,
+                            packageName);
+                }
+
+                final Set<String> removed = new LinkedHashSet<>(comparedTo.packageCount.keySet());
+                removed.removeAll(counts.packageCount.keySet());
+                removed.forEach(packageName -> System.out.printf(
+                        "%6d (%+6d) %s\n",
+                        0,
+                        -comparedTo.packageCount.get(packageName).value,
+                        packageName));
+            }
         };
 
         abstract void output(DexCount counts);
+        abstract void output(DexCount counts, DexCount comparedTo);
     }
 
     void output() {
         outputStyle.output(this);
+    }
+
+    void output(DexCount comparedTo) {
+        outputStyle.output(this, comparedTo);
     }
 
     int getOverallCount() {
@@ -82,6 +124,8 @@ public abstract class DexCount {
     }
 
     static class Node {
+
+        private static final NumberFormat FORMAT = new DecimalFormat("+#;-#");
 
         int count = 0;
         NavigableMap<String, Node> children = new TreeMap<String, Node>();
@@ -97,6 +141,26 @@ public abstract class DexCount {
                 child.output(indent);
             }
         }
-    }
 
+        void output(String indent, Node comparedTo) {
+            if (indent.length() == 0) {
+                out.println("<root>: " + count);
+            }
+            indent += "    ";
+
+            for (String name : children.navigableKeySet()) {
+                Node child = children.get(name);
+
+                final Node comparedToChild = (comparedTo == null)
+                        ? null
+                        :comparedTo.children.get(name);
+                final int diff = (comparedToChild == null)
+                        ? child.count
+                        : child.count - comparedToChild.count;
+
+                out.println(indent + name + ": " + child.count + " (" + FORMAT.format(diff) + ")");
+                child.output(indent, comparedToChild);
+            }
+        }
+    }
 }

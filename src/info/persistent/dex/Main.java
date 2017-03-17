@@ -35,6 +35,7 @@ public class Main {
     private String packageFilter;
     private int maxDepth = Integer.MAX_VALUE;
     private DexMethodCounts.Filter filter = DexMethodCounts.Filter.ALL;
+    private boolean compare;
     private DexMethodCounts.OutputStyle outputStyle = DexMethodCounts.OutputStyle.TREE;
 
     public static void main(String[] args) {
@@ -44,9 +45,10 @@ public class Main {
 
     void run(String[] args) {
         try {
-            String[] inputFileNames = parseArgs(args);
             int overallCount = 0;
-            for (String fileName : collectFileNames(inputFileNames)) {
+            DexCount previousCount = null;
+
+            for (String fileName : collectFileNames(parseArgs(args))) {
                 System.out.println("Processing " + fileName);
                 DexCount counts;
                 if (countFields) {
@@ -62,8 +64,15 @@ public class Main {
                     counts.generate(dexData, includeClasses, packageFilter, maxDepth, filter);
                     dexFile.close();
                 }
-                counts.output();
+
+                if (compare && previousCount != null) {
+                    counts.output(previousCount);
+                } else if (!compare) {
+                    counts.output();
+                }
+
                 overallCount =+ counts.getOverallCount();
+                previousCount = counts;
             }
             System.out.println(String.format("Overall %s count: %d", countFields ? "field" : "method", overallCount));
         } catch (UsageException ue) {
@@ -178,6 +187,8 @@ public class Main {
                 filter = Enum.valueOf(
                     DexMethodCounts.Filter.class,
                     arg.substring(arg.indexOf('=') + 1).toUpperCase());
+            } else if (arg.equals("--compare")) {
+                compare = true;
             } else if (arg.startsWith("--output-style")) {
                 outputStyle = Enum.valueOf(
                     DexMethodCounts.OutputStyle.class,
@@ -208,6 +219,7 @@ public class Main {
             "  --package-filter=com.foo.bar\n" +
             "  --max-depth=N\n" +
             "  --filter=ALL|DEFINED_ONLY|REFERENCED_ONLY\n" +
+            "  --compare\n" +
             "  --output-style=FLAT|TREE\n"
         );
     }
