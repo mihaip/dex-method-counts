@@ -63,7 +63,7 @@ public class Main {
                     dexFile.close();
                 }
                 counts.output();
-                overallCount = counts.getOverallCount();
+                overallCount =+ counts.getOverallCount();
             }
             System.out.println(String.format("Overall %s count: %d", countFields ? "field" : "method", overallCount));
         } catch (UsageException ue) {
