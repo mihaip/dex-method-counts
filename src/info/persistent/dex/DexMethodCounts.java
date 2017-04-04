@@ -49,6 +49,8 @@ public class DexMethodCounts extends DexCount {
                     String name = packageNamePieces[i];
                     if (packageNode.children.containsKey(name)) {
                         packageNode = packageNode.children.get(name);
+                    } else if (packageNode.children.containsKey("<default>") && "".equals(name)) {
+                        packageNode = packageNode.children.get("<default>");
                     } else {
                         Node childPackageNode = new Node();
                         if (name.length() == 0) {
